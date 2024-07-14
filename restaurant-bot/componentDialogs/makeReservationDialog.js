@@ -92,8 +92,10 @@ class MakeReservationDialog extends ComponentDialog {
             // Format the current date as YYYYMMDD
             const today = new Date();
             const dateString = today.toISOString().split('T')[0].replace(/-/g, '');
-            // Combine the first name and the date to create the customer_id
-            const customerId = `${ dateString }-${ firstName }`;
+            // Generate a random string of up to 8 characters
+            const randomString = Math.random().toString(36).substring(2, 8);
+            // Combine the first name and the random string to create the customer_id
+            const customerId = `${ dateString }-${ firstName }-${ randomString }`;
 
             const reservation = new Reservation({
                 customer_id: customerId,

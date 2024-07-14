@@ -2,6 +2,8 @@ const { WaterfallDialog, ComponentDialog, DialogSet, DialogTurnStatus } = requir
 
 const { ConfirmPrompt, ChoicePrompt, DateTimePrompt, NumberPrompt, TextPrompt } = require('botbuilder-dialogs');
 
+const Reservation = require('../models/reservationModel');
+
 const CHOICE_PROMPT = 'CHOICE_PROMPT';
 const CONFIRM_PROMPT = 'CONFIRM_PROMPT';
 const DATETIME_PROMPT = 'DATETIME_PROMPT';
@@ -43,23 +45,31 @@ class CancelReservationDialog extends ComponentDialog {
 
     async firstStep(step) {
         endDialog = false;
-        await step.context.sendActivity('Enter your Reservation Number for cancellation:');
+        await step.context.sendActivity('Enter your Customer ID for cancellation:');
         return await step.prompt(TEXT_PROMPT, '');
     }
 
     async confirmStep(step) {
-        step.values.reservationNo = step.result;
-        var msg = `You have entered Reservation Number: ${ step.values.reservationNo }`;
+        step.values.customer_id = step.result;
+        var msg = `You have entered Customer ID: ${ step.values.customer_id }`;
         await step.context.sendActivity(msg);
         return await step.prompt(CONFIRM_PROMPT, 'Is this correct?', ['yes', 'no']);
     }
 
     async summaryStep(step) {
         if (step.result === true) {
-            await step.context.sendActivity('Reservation successfully cancelled. Thank you!');
-            endDialog = true;
-            return await step.endDialog();
+            try {
+                await Reservation.findOneAndDelete({ customer_id: step.values.customer_id });
+                await step.context.sendActivity('Reservation successfully cancelled. Thank you!');
+            } catch (error) {
+                console.error('Error cancelling reservation:', error);
+                await step.context.sendActivity('An error occurred while cancelling the reservation. Please try again later.');
+            }
+        } else {
+            await step.context.sendActivity('Cancellation process terminated. Your reservation remains unchanged.');
         }
+        endDialog = true;
+        return await step.endDialog();
     }
 
     async isDialogComplete() {
