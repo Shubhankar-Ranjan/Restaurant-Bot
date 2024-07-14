@@ -2,6 +2,8 @@ const { WaterfallDialog, ComponentDialog, DialogSet, DialogTurnStatus } = requir
 
 const { ConfirmPrompt, ChoicePrompt, DateTimePrompt, NumberPrompt, TextPrompt } = require('botbuilder-dialogs');
 
+const Reservation = require('../models/reservationModel');
+
 const CHOICE_PROMPT = 'CHOICE_PROMPT';
 const CONFIRM_PROMPT = 'CONFIRM_PROMPT';
 const DATETIME_PROMPT = 'DATETIME_PROMPT';
@@ -85,10 +87,36 @@ class MakeReservationDialog extends ComponentDialog {
 
     async summaryStep(step) {
         if (step.result === true) {
-            await step.context.sendActivity('Reservation successfully confirmed. Thank you!');
+            // Extract the first name from the provided name
+            const firstName = step.values.name.split(' ')[0];
+            // Format the current date as YYYYMMDD
+            const today = new Date();
+            const dateString = today.toISOString().split('T')[0].replace(/-/g, '');
+            // Combine the first name and the date to create the customer_id
+            const customerId = `${ dateString }-${ firstName }`;
+
+            const reservation = new Reservation({
+                customer_id: customerId,
+                name: step.values.name,
+                numberOfParticipants: step.values.numberOfParticipants,
+                date: step.values.date,
+                time: step.values.time
+            });
+
+            try {
+                await reservation.save();
+                await step.context.sendActivity(`Reservation successfully confirmed for customer ID: ${ customerId }. Thank you!`);
+                endDialog = true;
+            } catch (error) {
+                console.error('Error saving reservation:', error);
+                await step.context.sendActivity('An error occurred while confirming your reservation. Please try again.');
+                endDialog = false; // Consider retrying or ending the dialog based on your error handling policy
+            }
+        } else {
+            await step.context.sendActivity('You chose not to go ahead with the reservation.');
             endDialog = true;
-            return await step.endDialog();
         }
+        return await step.endDialog();
     }
 
     async noOfParticipantsValidator(promptContext) {

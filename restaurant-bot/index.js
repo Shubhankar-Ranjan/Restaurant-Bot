@@ -7,6 +7,13 @@ dotenv.config({ path: ENV_FILE });
 
 const restify = require('restify');
 
+const mongoose = require('mongoose');
+
+mongoose.connect(process.env.MONGO_URI);
+const db = mongoose.connection;
+db.on('error', (error) => console.error(error));
+db.once('open', () => console.log('Connected to Database'));
+
 // Import required bot services.
 // See https://aka.ms/bot-services to learn more about the different parts of a bot.
 const {

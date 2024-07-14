@@ -19,6 +19,7 @@
         "botbuilder": "~4.22.1",
         "botbuilder-dialogs": "^4.22.3",
         "dotenv": "~8.2.0",
+        "mongoose": "^8.5.1",
         "restify": "~11.1.0"
     },
     "devDependencies": {
